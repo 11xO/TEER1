@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Inspect GitHub publishing status",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/c",
+				"git status --short && git branch --show-current && git --no-pager log -1 --oneline && git config user.name && git config user.email"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
