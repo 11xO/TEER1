@@ -5,7 +5,7 @@ import { AuthStoreError } from './store.js';
 import { CHALLENGE_TTL_MS, SESSION_COOKIE_NAME, SESSION_TTL_MS, VERIFICATION_COOKIE_NAME, clearCookie, hashToken, isToken, newToken, readCookie, readSessionFromRequest, writeCookie } from './sessions.js';
 const error = (code, status, message) => new AuthStoreError(code, status, message);
 const phonePayload = z.object({ phone: z.string().trim().regex(/^(?:01\d{9}|\+201\d{9})$/) }).strict();
-const codePayload = z.object({ challengeId: z.uuid(), code: z.string().regex(/^\d{6}$/) }).strict();
+const codePayload = z.object({ challengeId: z.uuid(), code: z.string().regex(/^\d{4,6}$/) }).strict();
 export function normalizeEgyptianPhone(value) {
   if (typeof value !== 'string') return null;
   let local = value.trim(); if (local.startsWith('+20')) local = `0${local.slice(3)}`;
@@ -33,15 +33,20 @@ export function createApiApp({ env = process.env, provider, store, clock = Date.
     try { const now = clock(); if (now >= cleanupAt) { store.cleanup(now); cleanupAt = now + 60000; } next(); } catch (error) { next(error); }
   });
   app.use('/api', express.json({ limit: '8kb', strict: true }));
-  function requireProvider() { if (!provider) throw error('WHATSAPP_NOT_CONFIGURED', 503, 'WhatsApp verification has not been configured.'); return provider; }
+  function requireProvider() {
+    if (!provider) throw error('WHATSAPP_NOT_CONFIGURED', 503, 'WhatsApp verification has not been configured.');
+    return provider;
+  }
   app.post('/api/whatsapp/send', async (request, response) => {
     const parsed = phonePayload.safeParse(request.body);
     const phone = parsed.success && normalizeEgyptianPhone(parsed.data.phone);
     if (!phone) throw error('INVALID_PHONE', 400, 'Enter a valid Egyptian mobile number.');
-    const activeProvider = requireProvider(); const now = clock();
+    const activeProvider = requireProvider();
+    const now = clock();
     const resendAt = store.reserveSend({ phone: phone.local, ip: request.ip || request.socket.remoteAddress || 'unknown', now });
     let binding = readCookie(request, VERIFICATION_COOKIE_NAME); if (!isToken(binding)) binding = newToken();
-    const cancellation = cancellationFor(response); let verification;
+    const cancellation = cancellationFor(response);
+    let verification;
     try { verification = await activeProvider.send(phone.e164, { signal: cancellation.signal }); }
     catch { throw error('WHATSAPP_UNAVAILABLE', 503, 'WhatsApp verification is temporarily unavailable.'); }
     finally { cancellation.release(); }
@@ -54,13 +59,16 @@ export function createApiApp({ env = process.env, provider, store, clock = Date.
   app.post('/api/whatsapp/verify', async (request, response) => {
     const binding = readCookie(request, VERIFICATION_COOKIE_NAME);
     if (!isToken(binding)) throw error('INVALID_CHALLENGE', 400, 'Please request a new verification code.');
+    const activeProvider = requireProvider();
     const parsed = codePayload.safeParse(request.body);
-    if (!parsed.success) throw error('INVALID_CODE', 400, 'Enter the six-digit verification code and a valid challenge.');
+    if (!parsed.success) throw error('INVALID_CODE', 400, 'Enter a valid verification code and challenge.');
     const { challengeId, code } = parsed.data;
-    const activeProvider = requireProvider(); const now = clock();
+    if (code.length !== (activeProvider.codeLength || 6)) throw error('INVALID_CODE', 400, `Enter the ${activeProvider.codeLength || 6}-digit verification code.`);
+    const now = clock();
     store.takeRateLimit(`verify:${request.ip || request.socket.remoteAddress || 'unknown'}`, 30, 600000, now);
     const challenge = store.claimChallenge({ id: challengeId, bindingHash: hashToken(binding), now });
-    const cancellation = cancellationFor(response); let approved;
+    const cancellation = cancellationFor(response);
+    let approved;
     try { approved = await activeProvider.verify(challenge.providerSid, code, { signal: cancellation.signal }); }
     catch { store.rejectChallenge(challengeId, challenge.claimToken); throw error('WHATSAPP_UNAVAILABLE', 503, 'WhatsApp verification is temporarily unavailable.'); }
     finally { cancellation.release(); }

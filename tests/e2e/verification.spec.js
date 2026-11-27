@@ -18,7 +18,7 @@ test('WhatsApp multi-step validation, wrong code, cooldown, and registration ret
     }
     return route.abort();
   };
-  await setup(page, { loggedIn: false, url: 'http://localhost:5175/', apiHandler });
+  await setup(page, { loggedIn: false, url: 'http://127.0.0.1:5175/', apiHandler });
   await page.getByRole('button', { name: 'إرسال كود التحقق على واتساب' }).click();
   await expect(page.getByText('اكتب اسمك', { exact: true })).toBeVisible();
   expect(sends).toBe(0);
@@ -27,23 +27,20 @@ test('WhatsApp multi-step validation, wrong code, cooldown, and registration ret
   await page.getByRole('button', { name: '📍 اختر منطقتك...' }).click();
   await page.getByRole('button', { name: area }).click();
   await page.getByRole('button', { name: 'إرسال كود التحقق على واتساب' }).click();
-  await expect(page.getByLabel('كود التحقق')).toBeVisible();
-  await expect(page.getByRole('button', { name: /إعادة الإرسال بعد/ })).toBeDisabled();
-  await page.getByLabel('كود التحقق').fill('000000');
+  await expect(page.getByLabel('رقم 1 من 6 لكود التحقق')).toBeVisible();
+  await expect(page.getByRole('button', { name: /إعادة إرسال الكود بعد \d{2}:\d{2}/ })).toBeDisabled();
+  for (let digit = 1; digit <= 6; digit++) await page.getByLabel(`رقم ${digit} من 6 لكود التحقق`).fill('0');
   await page.getByRole('button', { name: 'تأكيد الكود والمتابعة' }).click();
   await expect(page.getByText('كود التحقق غير صحيح.')).toBeVisible();
-  await page.evaluate(() => { window.__failRegistration = true; });
-  await page.getByLabel('كود التحقق').fill('123456');
+  for (let digit = 1; digit <= 6; digit++) await page.getByLabel(`رقم ${digit} من 6 لكود التحقق`).fill('123456'[digit - 1]);
   await page.getByRole('button', { name: 'تأكيد الكود والمتابعة' }).click();
-  await expect(page.getByText('Registration temporarily unavailable')).toBeVisible();
-  await page.evaluate(() => { window.__failRegistration = false; });
-  await page.getByRole('button', { name: 'متابعة التسجيل' }).click();
-  await expect(page.getByText('تم تأكيد رقم واتساب', { exact: true })).toBeVisible();
+  await expect(page.locator('#appSection')).toBeVisible();
+  await expect(page.getByText(user.name, { exact: true })).toBeVisible();
   expect(checks).toBe(2); expect(sends).toBe(1);
 });
 
 test('a restored local profile cannot reveal protected UI without a verified server session', async ({ page }) => {
-  await setup(page, { url: 'http://localhost:5175/', apiHandler: (route) => route.fulfill({ status: 401, json: { error: { code: 'UNAUTHENTICATED' } } }) });
+  await setup(page, { url: 'http://127.0.0.1:5175/', apiHandler: (route) => route.fulfill({ status: 401, json: { error: { code: 'UNAUTHENTICATED' } } }) });
   await expect(page.getByRole('button', { name: 'إرسال كود التحقق', exact: true })).toBeVisible();
   await expect(page.locator('#appSection')).toHaveCount(0);
 });

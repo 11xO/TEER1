@@ -17,7 +17,7 @@ export function AppProvider({ children }) {
   const [notice, setNotice] = useState(null);
   const toast = useCallback((message, type = 'info') => setNotice({ message, type, id: Date.now() }), []);
   const auth = useAuth(toast);
-  const { user, preview, suspended } = auth;
+  const { user, suspended } = auth;
   const online = useOnline();
   const [page, setPage] = useState(() => pages.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
   const [service, setService] = useState(null);
@@ -52,7 +52,7 @@ export function AppProvider({ children }) {
   const rewards = { ...DEFAULT_REWARDS, ...rewardSource.value };
   const areaSettings = { ...settingsSource.value, shippingPrice: Number(settingsSource.value.shippingPrice ?? 30), shippingDays: Number(settingsSource.value.shippingDays ?? 3) };
   const pricing = { generalDeliveryPrice: Number(pricingSource.value.generalDeliveryPrice ?? 0), tuktukCommission: Number(pricingSource.value.tuktukCommission ?? 10), delegateCommission: Number(pricingSource.value.delegateCommission ?? 10), destinations: entries(pricingSource.value.destinations).filter((item) => item.name) };
-  const discountKey = phone ? `mishwarak_discounts:${phone}` : '';
+  const discountKey = phone ? `teer_discounts:${phone}` : '';
   const [discountState, setDiscountState] = useState(() => ({ key: '', value: EMPTY_DISCOUNTS }));
   const discounts = discountState.key === discountKey ? discountState.value : storage.json(discountKey, EMPTY_DISCOUNTS);
   const setDiscounts = (next) => {
@@ -96,9 +96,9 @@ export function AppProvider({ children }) {
       let code = existing;
       if (!code) {
         // Keep existing codes; reserve new codes without phone-suffix collisions.
-        code = `MISH${phone.slice(-4)}`;
+        code = `TEER${phone.slice(-4)}`;
         const owner = await read(`invite_codes/${code}`);
-        if (owner && owner !== phone) code = `MISH${phone}`;
+        if (owner && owner !== phone) code = `TEER${phone}`;
         await patch('/', { [`my_invite_codes/${phone}`]: code, [`invite_codes/${code}`]: phone });
       }
       if (active) setInviteCode(code);
@@ -114,7 +114,7 @@ export function AppProvider({ children }) {
   useEffect(() => { setService(null); }, [area]);
 
   function canOrder() {
-    if (preview || !phone) { toast('👁️ في وضع المعاينة — لازم تتقبل الأول', 'info'); return false; }
+    if (!phone) { toast('لازم تتقبل الطلب الأول', 'info'); return false; }
     if (suspended) { toast('⏸️ حسابك معلق — مش هتقدر تعمل طلب', 'error'); return false; }
     if (!online) { toast('اتصل بالإنترنت لإتمام الطلب', 'error'); return false; }
     if (closed) { toast('إحنا بره ساعات العمل دلوقتي', 'error'); return false; }

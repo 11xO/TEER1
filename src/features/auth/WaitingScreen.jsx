@@ -6,7 +6,7 @@ import { registrationMessage } from './LoginScreen.jsx';
 import { WHATSAPP_VERIFICATION_ENABLED } from '../../api/http.js';
 
 export default function WaitingScreen() {
-  const { pending, pendingLoading, pendingError, manualApproval, waitingMinutes, support, enterPreview, cancelRegistration, backToRegistration, confirm, toast } = useApp();
+  const { pending, pendingLoading, pendingError, manualApproval, waitingMinutes, support, cancelRegistration, backToRegistration, confirm, toast } = useApp();
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const seconds = Math.max(0, waitingMinutes * 60 - Math.floor((now - (pending?.requestedAt || now)) / 1000));
@@ -26,7 +26,7 @@ export default function WaitingScreen() {
     <div className="waiting-title">⏳ جاري المراجعة</div><div className="waiting-desc">{manualApproval ? 'طلبك وصل لفريقنا' : 'بعتنا طلبك وجاري المراجعة'}<br /><b style={manualApproval ? { color: '#2563eb' } : undefined}>{manualApproval ? 'هيتم التواصل معاك قريباً' : `هيتم الموافقة خلال ${waitingMinutes} دقايق`}</b></div>
     <div className="whatsapp-sent-card"><div className="whatsapp-sent-icon"><Icon name="fa-whatsapp" brand /></div><div className="whatsapp-sent-text"><div className="whatsapp-sent-title"><span className="check-mark"><Icon name="fa-check" /></span> {WHATSAPP_VERIFICATION_ENABLED ? 'تم تأكيد رقم واتساب' : 'تم فتح الواتساب'}</div><div className="whatsapp-sent-sub">{WHATSAPP_VERIFICATION_ENABLED ? 'طلبك اتسجل وفريقنا هيراجعه' : 'ابعت الرسالة الجاهزة للأدمن'}</div></div></div>
     <a href={whatsappUrl(support, WHATSAPP_VERIFICATION_ENABLED ? 'السلام عليكم، محتاج مساعدة في مراجعة تسجيلي' : registrationMessage(pending))} target="_blank" rel="noopener noreferrer" className="reopen-whatsapp-btn" style={{ textDecoration: 'none' }}><Icon name="fa-whatsapp" brand /><span>{WHATSAPP_VERIFICATION_ENABLED ? 'تواصل مع الدعم' : 'افتح الواتساب تاني'}</span></a>
-    <button className="preview-enter-btn" onClick={enterPreview}><Icon name="fa-eye" /> شوف التطبيق (معاينة فقط)</button><div className="waiting-note-new"><div className="note-icon"><Icon name="fa-lightbulb" /></div><div><b>💡 نصيحة</b> {WHATSAPP_VERIFICATION_ENABLED ? 'تقدر تتصفح التطبيق لحد ما فريقنا يوافق على طلبك' : 'لو بعت الرسالة، الموافقة هتكون أسرع بكثير'}</div></div><button className="waiting-cancel" onClick={() => confirm('إلغاء التسجيل', 'متأكد؟', async () => { try { await cancelRegistration(); } catch { toast('تعذر إلغاء الطلب، حاول تاني', 'error'); } })}><Icon name="fa-times" /> إلغاء الطلب</button>
+    <div className="waiting-note-new"><div className="note-icon"><Icon name="fa-lightbulb" /></div><div><b>💡 نصيحة</b> {WHATSAPP_VERIFICATION_ENABLED ? 'طلبك في انتظار موافقة فريق طير' : 'لو بعت الرسالة، الموافقة هتكون أسرع بكثير'}</div></div><button className="waiting-cancel" onClick={() => confirm('إلغاء التسجيل', 'متأكد؟', async () => { try { await cancelRegistration(); } catch { toast('تعذر إلغاء الطلب، حاول تاني', 'error'); } })}><Icon name="fa-times" /> إلغاء الطلب</button>
   </>;
   return <div className="waiting-screen" id="waitingSection"><div className="waiting-card">{content}</div></div>;
 }

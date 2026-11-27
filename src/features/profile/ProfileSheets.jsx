@@ -53,10 +53,9 @@ function AddressEditor() {
   </>;
 }
 export default function ProfileSheets() {
-  const { profileSheet, setProfileSheet, user, preview, updateProfile, supportUrl, logout, toast } = useApp();
+  const { profileSheet, setProfileSheet, user, updateProfile, supportUrl, logout, toast } = useApp();
   const [picker, setPicker] = useState(false);
-  if (profileSheet === 'address' && !preview) return <AddressEditor />;
-  if (profileSheet === 'address' && preview) return <Sheet title="🏠 عنواني" icon="fa-home" onClose={() => setProfileSheet(null)}><p className="info-card">👁️ في وضع المعاينة — لازم تتقبل الأول</p></Sheet>;
+  if (profileSheet === 'address') return <AddressEditor />;
   if (profileSheet !== 'settings') return null;
   return <><Sheet id="settingsSheet" title="الإعدادات" subtitle="اضبط إعداداتك" icon="fa-cog" gradient="linear-gradient(135deg,#8b5cf6,#7c3aed)" onClose={() => setProfileSheet(null)}><div className="profile-list" style={{ margin: 0 }}><ProfileAction icon="fa-map-marker-alt" colors="#f59e0b,#d97706" title="تغيير المنطقة" subtitle={`الحالية: ${user.area || '-'}`} onClick={() => setPicker(true)} /><ProfileAction icon="fa-home" colors="#10b981,#059669" title="تعديل عنواني" subtitle={user.address ? user.address.length > 30 ? `${user.address.slice(0, 30)}...` : user.address : 'غير محدد'} onClick={() => setProfileSheet('address')} /><ProfileAction icon="fa-whatsapp" colors="#25D366,#128C7E" title="الدعم الفني" href={supportUrl} /><ProfileAction icon="fa-sign-out-alt" colors="#ef4444,#b91c1c" title="تسجيل الخروج" onClick={logout} /></div><div style={{ fontSize: 11, color: 'var(--text-muted)', margin: '14px 0 8px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="fa-share-alt" style={{ color: 'var(--primary)' }} /> تابعنا</div><SocialLinks /></Sheet>
     {picker && <AreaPicker value={user.area} onClose={() => setPicker(false)} onSelect={async (area) => { try { await updateProfile({ area }); setPicker(false); toast('✅ تم تغيير المنطقة', 'success'); } catch { toast('❌ فشل الحفظ', 'error'); } }} />}

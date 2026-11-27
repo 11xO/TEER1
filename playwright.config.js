@@ -6,6 +6,6 @@ export default defineConfig({
   webServer: [
     { command: 'npm run dev -- --port 5174 --strictPort', url: 'http://localhost:5174', reuseExistingServer: !process.env.CI },
     { command: 'npm run preview -- --port 4174 --strictPort', url: 'http://localhost:4174', reuseExistingServer: !process.env.CI },
-    { command: 'npm run dev -- --port 5175 --strictPort', url: 'http://localhost:5175', env: { VITE_WHATSAPP_VERIFICATION_ENABLED: 'true' }, reuseExistingServer: !process.env.CI },
+    { command: 'npm run dev -- --port 5175 --strictPort', url: 'http://localhost:5175', env: { VITE_WHATSAPP_VERIFICATION_ENABLED: 'true', VITE_LOCAL_TEST_OTP: 'false' }, reuseExistingServer: !process.env.CI },
   ],
 });

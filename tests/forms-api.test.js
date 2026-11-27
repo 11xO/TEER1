@@ -28,7 +28,7 @@ test('REST cancellation aborts fetch and preserves AbortError', async (t) => {
 test('REST errors preserve Retry-After and no-content responses work', async (t) => {
   const original = globalThis.fetch; t.after(() => { globalThis.fetch = original; });
   globalThis.fetch = async () => Response.json({ error: { code: 'PHONE_COOLDOWN', message: 'Wait' } }, { status: 429, headers: { 'Retry-After': '60' } });
-  await assert.rejects(request('/whatsapp/send', { method: 'POST', body: { phone: '01111111111' } }), (error) => error.status === 429 && error.retryAfter === 60);
+  await assert.rejects(request('/whatsapp/send', { method: 'POST', body: { phone: '01111111111' } }), (error) => error.status === 429 && error.retryAfter === 60 && error.message.includes('دقيقة واحدة'));
   globalThis.fetch = async () => new Response(null, { status: 204 });
   assert.equal(await request('/session'), null);
 });

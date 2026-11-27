@@ -1,4 +1,4 @@
-export const WHATSAPP_VERIFICATION_ENABLED = import.meta.env?.VITE_WHATSAPP_VERIFICATION_ENABLED === 'true';
+export const WHATSAPP_VERIFICATION_ENABLED = import.meta.env?.VITE_WHATSAPP_VERIFICATION_ENABLED !== 'false';
 export const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 const messages = {
   WHATSAPP_NOT_CONFIGURED: 'خدمة أكواد واتساب لسه غير مفعّلة. تواصل مع الدعم.',
@@ -9,9 +9,20 @@ const messages = {
   TOO_MANY_ATTEMPTS: 'وصلت للحد الأقصى للمحاولات. اطلب كود جديد بعد انتهاء المدة.',
   VERIFICATION_IN_PROGRESS: 'جاري التحقق من الكود بالفعل.', UNAUTHENTICATED: 'محتاج تأكيد رقم واتساب.',
 };
+function retryDuration(seconds) {
+  const total = Math.max(1, Math.ceil(seconds));
+  const minutes = Math.floor(total / 60);
+  const remainingSeconds = total % 60;
+  const minuteText = minutes === 1 ? 'دقيقة واحدة' : minutes === 2 ? 'دقيقتين' : `${minutes} دقائق`;
+  if (minutes && remainingSeconds) return `${minuteText} و${remainingSeconds} ثانية`;
+  if (minutes) return minuteText;
+  return `${remainingSeconds} ثانية`;
+}
 export class ApiError extends Error {
   constructor(status, code, message, fieldErrors = {}, retryAfter = null) {
-    super(messages[code] || message); this.name = 'ApiError'; this.status = status;
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryDuration(retryAfter) : null;
+    const retryMessage = code === 'PHONE_COOLDOWN' && wait ? `استنى ${wait} قبل طلب كود جديد.` : code === 'TOO_MANY_REQUESTS' && wait ? `وصلت للحد المؤقت للطلبات. تقدر تحاول بعد ${wait}.` : null;
+    super(retryMessage || messages[code] || message); this.name = 'ApiError'; this.status = status;
     this.code = code; this.fieldErrors = fieldErrors; this.retryAfter = retryAfter;
   }
 }

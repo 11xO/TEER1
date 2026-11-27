@@ -27,14 +27,14 @@ test('mobile layout, full-discount trip, failed-write retry, and coupon consumpt
   await page.evaluate(() => { window.__failOrder = true; });
   await page.getByRole('button', { name: 'اطلب الآن' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mishwarak_discounts:01111111111')).amount)).toBe(20);
+  expect(await page.evaluate(() =>   JSON.parse(localStorage.getItem('teer_discounts:01111111111')).amount)).toBe(20);
   await page.evaluate(() => { window.__failOrder = false; });
   await page.getByRole('button', { name: 'اطلب الآن' }).click();
   await expect(page.locator('#successSheet')).toBeVisible();
   const orders = await page.evaluate(() => Object.values(window.__fixture.data.primary.orders));
   expect(orders).toHaveLength(1);
   expect(orders[0]).toMatchObject({ price: 0, originalPrice: 15, discountAmount: 15, orderType: 'trip' });
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('mishwarak_discounts:01111111111')).amount)).toBe(0);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('teer_discounts:01111111111')).amount)).toBe(0);
   expect(errors).toEqual([]);
 });
 
@@ -52,7 +52,7 @@ test('market cart keeps address while quantities change and applies delivery cou
   const orders = await page.evaluate(() => Object.values(window.__fixture.data.primary.orders));
   expect(orders[0]).toMatchObject({ price: 100, originalPrice: 125, discountAmount: 25, itemsTotal: 100, to: 'شارع جديد ١٢' });
   expect(orders[0].items[0]).toMatchObject({ name: 'أرز', price: 50, qty: 2 });
-  const discounts = await page.evaluate(() => JSON.parse(localStorage.getItem('mishwarak_discounts:01111111111')));
+  const discounts = await page.evaluate(() => JSON.parse(localStorage.getItem('teer_discounts:01111111111')));
   expect(discounts.coupon).toBe(false); expect(discounts.amount).toBe(20);
 });
 
@@ -60,10 +60,10 @@ test('shipping and current orders update independently, active orders cannot be 
   await setup(page);
   await page.evaluate(async ({ phone }) => {
     await window.__fixture.write('orders/a', { phone, type: 'مشوار', orderType: 'trip', status: 'ready_for_driver', time: Date.now(), price: 15, pointsEarned: 10 });
-    await window.__fixture.write('orders/b', { phone, type: 'شحنة', isShipping: true, status: 'ready_for_driver', shipStatus: 'pending', trackingCode: 'MISH-TEST', time: Date.now() });
+    await window.__fixture.write('orders/b', { phone, type: 'شحنة', isShipping: true, status: 'ready_for_driver', shipStatus: 'pending', trackingCode: 'TEER-TEST', time: Date.now() });
   }, { phone });
   await page.getByRole('button', { name: 'الشحن', exact: true }).click();
-  await expect(page.getByText('MISH-TEST')).toBeVisible();
+  await expect(page.getByText('TEER-TEST')).toBeVisible();
   await page.getByRole('button', { name: 'طلباتي', exact: true }).click();
   await page.getByRole('button', { name: 'إلغاء الطلب' }).click();
   await page.getByRole('button', { name: 'تأكيد', exact: true }).click();

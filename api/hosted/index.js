@@ -2,13 +2,17 @@ import { createD1AuthStore, AuthStoreError } from './store.js';
 import { createWhatsAppVerificationProvider } from '../whatsappVerification.js';
 import assets from 'virtual:site-assets';
 
-const SESSION = '__Secure-mishwarak_session';
-const BINDING = '__Secure-mishwarak_verification';
+const SESSION = '__Secure-teer_session';
+const BINDING = '__Secure-teer_verification';
 const CHALLENGE_TTL = 600000;
 const SESSION_TTL = 7 * 86400000;
 let nextCleanup = 0;
 const fail = (code, status, message) => new AuthStoreError(code, status, message);
 const configured = (env) => ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_VERIFY_SERVICE_SID'].every((key) => typeof env[key] === 'string' && env[key].trim());
+function verificationProvider(env) {
+  if (!configured(env)) throw fail('WHATSAPP_NOT_CONFIGURED', 503, 'خدمة التحقق من واتساب غير مفعّلة بعد.');
+  return createWhatsAppVerificationProvider({ accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN, serviceSid: env.TWILIO_VERIFY_SERVICE_SID });
+}
 const token = () => {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
@@ -52,10 +56,6 @@ async function body(request) {
 async function sessionFor(request, store) {
   const value = readCookie(request, SESSION);
   return validToken(value) ? store.getSession(await hash(value), Date.now()) : null;
-}
-function provider(env) {
-  if (!configured(env)) throw fail('WHATSAPP_NOT_CONFIGURED', 503, 'خدمة أكواد واتساب لم يتم تفعيلها بعد.');
-  return createWhatsAppVerificationProvider({ accountSid: env.TWILIO_ACCOUNT_SID, authToken: env.TWILIO_AUTH_TOKEN, serviceSid: env.TWILIO_VERIFY_SERVICE_SID });
 }
 async function webSocket(request, store) {
   if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: { code: 'UPGRADE_REQUIRED', message: 'WebSocket required.' } }, 426);
@@ -111,14 +111,15 @@ export async function apiFetch(request, env, ctx) {
     const payload = await body(request); let phone = typeof payload.phone === 'string' ? payload.phone.trim() : '';
     if (phone.startsWith('+20')) phone = '0' + phone.slice(3);
     if (!/^01\d{9}$/.test(phone)) throw fail('INVALID_PHONE', 400, 'اكتب رقم موبايل مصري صحيح.');
-    const transport = provider(env); const now = Date.now();
+    const activeProvider = verificationProvider(env);
+    const now = Date.now();
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('oai-authenticated-user-id') || 'unknown';
     await store.takeRateLimit(`send:${ip}`, 10, 3600000, now);
     const resendAt = await store.reserveSend({ phone, now });
     await store.takeRateLimit(`send-phone:${phone}`, 5, 3600000, now);
     let binding = readCookie(request, BINDING); if (!validToken(binding)) binding = token();
     let verification;
-    try { verification = await transport.send(`+20${phone.slice(1)}`, { signal: request.signal }); }
+    try { verification = await activeProvider.send(`+20${phone.slice(1)}`, { signal: request.signal }); }
     catch { throw fail('WHATSAPP_UNAVAILABLE', 503, 'تعذر إرسال كود واتساب حالياً.'); }
     const challengeId = crypto.randomUUID();
     const challenge = await store.createChallenge({ id: challengeId, phone, providerSid: verification.sid, bindingHash: await hash(binding), now, expiresAt: now + CHALLENGE_TTL });
@@ -128,12 +129,13 @@ export async function apiFetch(request, env, ctx) {
     const payload = await body(request); const binding = readCookie(request, BINDING);
     if (!validToken(binding) || typeof payload.challengeId !== 'string' || !/^[a-f0-9-]{36}$/i.test(payload.challengeId)) throw fail('INVALID_CHALLENGE', 400, 'اطلب كود تحقق جديد.');
     if (typeof payload.code !== 'string' || !/^\d{6}$/.test(payload.code)) throw fail('INVALID_CODE', 400, 'اكتب الكود المكوّن من 6 أرقام.');
-    const transport = provider(env); const now = Date.now();
+    const activeProvider = verificationProvider(env);
+    const now = Date.now();
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('oai-authenticated-user-id') || 'unknown';
     await store.takeRateLimit(`verify:${ip}`, 30, 600000, now);
     const claim = await store.claimChallenge({ id: payload.challengeId, bindingHash: await hash(binding), now });
     let approved;
-    try { approved = await transport.verify(claim.providerSid, payload.code, { signal: request.signal }); }
+    try { approved = await activeProvider.verify(claim.providerSid, payload.code, { signal: request.signal }); }
     catch { await store.rejectChallenge(payload.challengeId, claim.claimToken); throw fail('WHATSAPP_UNAVAILABLE', 503, 'تعذر تأكيد كود واتساب حالياً.'); }
     if (!approved) { await store.rejectChallenge(payload.challengeId, claim.claimToken); throw fail('INVALID_CODE', 400, 'كود التحقق غير صحيح.'); }
     const value = token(); const previous = readCookie(request, SESSION); const issuedAt = Date.now();

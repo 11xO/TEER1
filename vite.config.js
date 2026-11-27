@@ -14,18 +14,18 @@ export default defineConfig({
   } } } },
   plugins: [react(), VitePWA({
     strategies: 'injectManifest', srcDir: 'src', filename: 'sw.js', registerType: 'autoUpdate', injectRegister: null,
-    includeAssets: ['logo.png', 'tuktuk.png', 'icons/*.png'],
+    includeAssets: ['logo.webp', 'tuktuk.webp', 'icons/*.webp'],
     manifest: {
-      id: './', name: 'teer | خدمات ذكية', short_name: 'teer', description: 'خدمات توصيل ذكية لباب بيتك',
+      id: './', name: 'Teer | خدمات ذكية', short_name: 'Teer', description: 'خدمات توصيل ذكية لباب بيتك',
       lang: 'ar', dir: 'rtl', start_url: './', scope: './', display: 'standalone', orientation: 'portrait', background_color: '#f8fafc', theme_color: '#8b5cf6', categories: ['shopping', 'food', 'utilities'],
       icons: [
-        { src: './icons/logo-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-        { src: './icons/logo-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-        { src: './icons/maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-        { src: './icons/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: './icons/logo-192.webp', sizes: '192x192', type: 'image/webp', purpose: 'any' },
+        { src: './icons/logo-512.webp', sizes: '512x512', type: 'image/webp', purpose: 'any' },
+        { src: './icons/maskable-192.webp', sizes: '192x192', type: 'image/webp', purpose: 'maskable' },
+        { src: './icons/maskable-512.webp', sizes: '512x512', type: 'image/webp', purpose: 'maskable' },
       ],
-      shortcuts: [{ name: 'طلباتي', short_name: 'طلباتي', url: './#orders', icons: [{ src: './icons/logo-192.png', sizes: '192x192', type: 'image/png' }] }],
+      shortcuts: [{ name: 'طلباتي', short_name: 'طلباتي', url: './#orders', icons: [{ src: './icons/logo-192.webp', sizes: '192x192', type: 'image/webp' }] }],
     },
-    injectManifest: { globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'] },
+    injectManifest: { globPatterns: ['**/*.{js,css,html,webp,svg,ico,woff,woff2}'] },
   })],
 });

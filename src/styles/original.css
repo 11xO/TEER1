@@ -42,7 +42,8 @@ body{background:var(--bg-main);color:var(--text);min-height:100vh;padding-bottom
 .login-logo-wrap{position:relative;width:110px;height:110px;margin:0 auto 20px}
 .login-logo-bg{position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(6,182,212,.1));border-radius:32px;animation:iconPulse 3s infinite}
 @keyframes iconPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.1);opacity:.9}}
-.login-logo{position:relative;z-index:2;width:90px;height:90px;border-radius:24px;object-fit:cover;display:block;margin:10px auto;box-shadow:0 10px 30px rgba(139,92,246,.25);background:#fff}
+.login-logo{position:relative;z-index:2;width:90px;height:90px;border-radius:24px;object-fit:cover;display:block;margin:10px auto;box-shadow:0 10px 30px rgba(139,92,246,.25);background:#fff;animation:loginLogoFloat 3.2s ease-in-out infinite;transform-origin:center}
+@keyframes loginLogoFloat{0%,100%{transform:translateY(0) rotate(-1deg) scale(1)}50%{transform:translateY(-9px) rotate(2deg) scale(1.03)}}
 .login-title{text-align:center;font-size:26px;font-weight:900;color:var(--text);margin-bottom:8px;background:linear-gradient(90deg,#8b5cf6,#06b6d4,#8b5cf6);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:sh 3s linear infinite}
 .login-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:28px;line-height:1.7}
 .inp-wrap{position:relative;margin:12px 0}
@@ -86,7 +87,6 @@ body{background:var(--bg-main);color:var(--text);min-height:100vh;padding-bottom
 .waiting-note-new .note-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0}
 .waiting-note-new b{color:#7c3aed;display:block;margin-bottom:2px}
 .waiting-cancel{padding:14px 20px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#dc2626;border-radius:14px;font-weight:900;font-size:13px;cursor:pointer;font-family:'Cairo',sans-serif;margin-top:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
-.preview-enter-btn{width:100%;padding:14px;background:linear-gradient(135deg,#06b6d4,#0891b2);border:none;border-radius:14px;color:#fff;font-weight:900;font-size:13.5px;cursor:pointer;font-family:'Cairo',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;box-shadow:0 8px 20px rgba(6,182,212,.3)}
 .waiting-approved{background:rgba(16,185,129,.08);border:2px solid #10b981;border-radius:24px;padding:30px 24px;margin:20px 0;text-align:center}
 .waiting-approved-icon{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:44px;color:#fff;margin:0 auto 18px;box-shadow:0 10px 30px rgba(16,185,129,.35);animation:approvedIconBounce 1.5s infinite}
 @keyframes approvedIconBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
@@ -360,7 +360,6 @@ body{background:var(--bg-main);color:var(--text);min-height:100vh;padding-bottom
 .addr-picker-btn{padding:12px 10px;border-radius:12px;border:2px solid var(--border);background:var(--bg-soft);color:var(--text-muted);font-weight:900;font-size:12.5px;cursor:pointer;font-family:'Cairo',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
 .addr-picker-btn.active{border-color:var(--primary);background:rgba(139,92,246,.1);color:var(--primary)}
 .addr-picker-btn:disabled{opacity:.4;cursor:not-allowed}
-.preview-mode-bar{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:10px 16px;text-align:center;font-size:12.5px;font-weight:900;z-index:99997;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 15px rgba(245,158,11,.35)}
 
 /* Social Contact */
 .social-contact-card{margin:0 20px 20px;background:linear-gradient(160deg,rgba(37,211,102,.08),rgba(24,119,242,.06));border:1px solid rgba(37,211,102,.25);border-radius:22px;padding:18px 18px 20px;box-shadow:var(--shadow-sm)}

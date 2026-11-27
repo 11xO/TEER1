@@ -13,6 +13,7 @@ export function createWhatsAppVerificationProvider({ accountSid, authToken, serv
     return data;
   }
   return {
+    codeLength: 6,
     async send(phone, { signal } = {}) {
       const data = await post('Verifications', { To: phone, Channel: 'whatsapp' }, signal);
       if (typeof data.sid !== 'string' || data.status !== 'pending') throw new Error('Unexpected WhatsApp verification response.');

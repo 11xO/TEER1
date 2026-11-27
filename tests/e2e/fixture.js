@@ -10,7 +10,7 @@ export function fixtureData() {
     users_points: { [phone]: 500 },
     market_categories: { [area]: { c1: { name: 'بقالة', icon: '🥫' } } },
     market_products: { [area]: { p1: { name: 'أرز', price: 50, categoryId: 'c1' }, p2: { name: 'سكر', price: 30, categoryId: 'c1' } } },
-    my_invite_codes: { [phone]: 'MISH1111' }, invite_codes: { MISH1111: phone },
+    my_invite_codes: { [phone]: 'TEER1111' }, invite_codes: { TEER1111: phone },
     orders: {},
   }, secondary: { customers: { [phone]: user }, approved_users: { [phone]: user } } };
 }
@@ -62,9 +62,9 @@ export async function setup(page, { loggedIn = true, discounts, data = fixtureDa
     if (!sessionStorage.getItem('fixture-initialized')) {
       localStorage.clear(); sessionStorage.setItem('fixture-initialized', 'true');
       if (loggedIn) for (const [key, value] of Object.entries(user)) localStorage.setItem('user_' + key, value);
-      if (discounts) localStorage.setItem('mishwarak_discounts:' + user.phone, JSON.stringify(discounts));
+      if (discounts) localStorage.setItem('teer_discounts:' + user.phone, JSON.stringify(discounts));
     }
   }, { data, loggedIn, discounts, user });
-  await page.goto(url);
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
   await page.locator('.splash').waitFor({ state: 'detached' });
 }

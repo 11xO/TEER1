@@ -43,7 +43,7 @@ export default function ServiceSheet({ service, onClose }) {
   const readerRef = useRef(null);
   const change = (name) => (value) => form.setValue(name, value, { shouldDirty: true, shouldValidate: form.formState.isSubmitted });
   const configs = {
-    mishwar: ['طلب مشوار', 'توك توك لباب البيت', <img key="tuktuk" src="./tuktuk.png" alt="توك توك" style={{ width: '160%', height: '160%', objectFit: 'cover', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />, '#8b5cf6,#7c3aed'],
+    mishwar: ['طلب مشوار', 'توك توك لباب البيت',     <img key="tuktuk" src="./tuktuk.webp" alt="توك توك" style={{ width: '160%', height: '160%', objectFit: 'cover', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />, '#8b5cf6,#7c3aed'],
     pharma: ['توصيل صيدلية', 'دوا لباب البيت', 'fa-pills', '#06b6d4,#0891b2'],
     vegetables: ['توصيل خضار', 'طازة كل يوم', 'fa-carrot', '#10b981,#059669'],
     custom: ['✨ اطلب أي حاجة', 'هاتلي أي حاجة', 'fa-magic', '#a855f7,#7c3aed'],
@@ -89,7 +89,7 @@ export default function ServiceSheet({ service, onClose }) {
     if (kind === 'mishwar') Object.assign(data, { type: 'مشوار', orderType: 'trip', from: values.address.trim(), to: liveDestination.name });
     if (kind === 'pharma' || kind === 'vegetables') Object.assign(data, { type: kind === 'pharma' ? 'طلب صيدلية' : 'طلب خضار', orderType: kind === 'pharma' ? 'pharma' : 'grocery', details: escapeText(values.details.trim()).replace(/\n/g, '<br>'), ...(rx ? { rxImage: rx, hasRx: true, hasImages: true } : {}) });
     if (kind === 'custom' || custom) Object.assign(data, { type: custom?.name || 'اطلب أي حاجة', orderType: 'custom', itemName: values.item.trim(), details: `${custom ? `المكان: ${escapeText(custom.name)}<br>` : ''}الحاجة: ${escapeText(values.item.trim())}` });
-    if (kind === 'shipping') Object.assign(data, { type: 'شحنة', orderType: 'shipping', isShipping: true, fromName: values.fromName.trim(), fromPhone: values.fromPhone, fromAddr: values.address.trim(), toName: values.toName.trim(), toPhone: values.toPhone, toAddr: values.toAddress.trim(), from: values.address.trim(), to: values.toAddress.trim(), details: escapeText(values.details.trim()), commission: price * 0.1, codAmount: Number(values.cod), hasCOD: Number(values.cod) > 0, shipStatus: 'pending', trackingCode: `MISH-${new Date().getFullYear()}-${String(crypto.getRandomValues(new Uint32Array(1))[0] % 100000).padStart(5, '0')}` });
+    if (kind === 'shipping') Object.assign(data, { type: 'شحنة', orderType: 'shipping', isShipping: true, fromName: values.fromName.trim(), fromPhone: values.fromPhone, fromAddr: values.address.trim(), toName: values.toName.trim(), toPhone: values.toPhone, toAddr: values.toAddress.trim(), from: values.address.trim(), to: values.toAddress.trim(), details: escapeText(values.details.trim()), commission: price * 0.1, codAmount: Number(values.cod), hasCOD: Number(values.cod) > 0, shipStatus: 'pending',     trackingCode: `TEER-${new Date().getFullYear()}-${String(crypto.getRandomValues(new Uint32Array(1))[0] % 100000).padStart(5, '0')}` });
     locked.current = true; setLoading(true);
     try { if (await submitOrder(data, kind === 'mishwar' ? 'trip' : kind === 'shipping' ? 'none' : 'delivery') && mounted.current) onClose(); }
     finally { locked.current = false; if (mounted.current) setLoading(false); }

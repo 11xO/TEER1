@@ -11,12 +11,13 @@ import { createAuthStore } from '../api/store.js';
 import { attachApiEvents } from '../api/events.js';
 import { CHALLENGE_TTL_MS, SESSION_TTL_MS } from '../api/sessions.js';
 import { createWhatsAppVerificationProvider } from '../api/whatsappVerification.js';
+import { createLocalDevelopmentOtpProvider, isLocalDevelopmentOtpEnabled } from '../api/devOtp.js';
 const ORIGIN = 'http://localhost:5173';
 const PHONE = '01012345678';
 async function fixture(t, options = {}) {
   let time = Date.UTC(2026, 10, 12);
   const sends = [], checks = [];
-  const provider = {
+  const provider = options.provider || {
     send: options.send || (async (phone) => { sends.push(phone); return { sid: `verification-${sends.length}` }; }),
     verify: options.verify || (async (sid, code) => { checks.push({ sid, code }); return code === '123456'; }),
   };
@@ -42,24 +43,42 @@ async function fixture(t, options = {}) {
 const send = (f, phone = PHONE) => f.request('/api/whatsapp/send', { method: 'POST', body: { phone } });
 const verify = (f, challengeId, code = '123456', extra = {}) => f.request('/api/whatsapp/verify', { method: 'POST', body: { challengeId, code }, ...extra });
 
+test('local fixed code works only with a local development configuration', async (t) => {
+  const f = await fixture(t, { provider: createLocalDevelopmentOtpProvider() });
+  const started = await send(f);
+  assert.equal((await verify(f, started.body.challengeId, '1234')).status, 400);
+  assert.equal((await verify(f, started.body.challengeId, '5060')).status, 200);
+  const local = { NODE_ENV: 'development', DEV_OTP_ENABLED: 'true', API_HOST: '127.0.0.1', APP_ORIGIN: 'http://127.0.0.1:5173' };
+  assert.equal(isLocalDevelopmentOtpEnabled(local), true);
+  for (const unsafe of [
+    { ...local, NODE_ENV: 'production' },
+    { ...local, API_HOST: '0.0.0.0' },
+    { ...local, APP_ORIGIN: 'https://example.com' },
+    { ...local, DEV_OTP_ENABLED: 'false' },
+  ]) assert.equal(isLocalDevelopmentOtpEnabled(unsafe), false);
+});
+
 test('WhatsApp send normalizes phone, binds browser, never returns a code', async (t) => {
   const f = await fixture(t); const result = await send(f, '+201012345678');
   assert.equal(result.status, 200); assert.deepEqual(f.sends, ['+201012345678']);
   assert.equal(result.body.phone, PHONE); assert.equal(result.body.expiresAt - result.body.resendAt, 540000);
   assert.equal('code' in result.body, false); assert.match(result.cookies[0], /HttpOnly/); assert.match(result.cookies[0], /SameSite=Lax/); assert.match(result.cookies[0], /Path=\/api/);
 });
-test('invalid numbers, unconfigured provider, and invalid origins fail closed', async (t) => {
+test('invalid numbers, missing provider, and invalid origins fail closed', async (t) => {
   const f = await fixture(t);
   assert.equal((await send(f, '123')).status, 400);
   for (const origin of [null, 'https://other.example']) assert.equal((await f.request('/api/whatsapp/send', { method: 'POST', body: { phone: PHONE }, origin })).status, 403);
   assert.equal(f.sends.length, 0);
   const missing = await fixture(t, { noProvider: true });
-  const result = await send(missing); assert.equal(result.status, 503); assert.equal(result.body.error.code, 'WHATSAPP_NOT_CONFIGURED');
+  const unavailable = await send(missing);
+  assert.equal(unavailable.status, 503); assert.equal(unavailable.body.error.code, 'WHATSAPP_NOT_CONFIGURED');
+  const valid = await send(f);
+  assert.equal(valid.status, 200); assert.equal(f.sends.length, 1);
 });
 test('send cooldown prevents duplicate sends before provider call', async (t) => {
   const f = await fixture(t); await send(f); const result = await send(f);
   assert.equal(result.status, 429); assert.equal(result.headers.get('retry-after'), '60'); assert.equal(f.sends.length, 1);
-  f.advance(60000); assert.equal((await send(f)).status, 200);
+  f.advance(60000); assert.equal((await send(f)).status, 200); assert.equal(f.sends.length, 2);
 });
 test('verification binds to browser and provider SID, then prevents replay', async (t) => {
   const f = await fixture(t); const started = await send(f);
@@ -70,7 +89,7 @@ test('verification binds to browser and provider SID, then prevents replay', asy
   assert.equal((await f.request('/api/session')).status, 200);
   assert.equal((await verify(f, started.body.challengeId, '123456', { cookie: binding })).status, 400); assert.equal(f.checks.length, 1);
 });
-test('only five attempts reach the provider; expired codes do not', async (t) => {
+test('only five attempts are allowed; expired codes do not verify', async (t) => {
   const f = await fixture(t); const started = await send(f);
   for (let i = 0; i < 5; i++) assert.equal((await verify(f, started.body.challengeId, '000000')).status, 400);
   assert.equal((await verify(f, started.body.challengeId)).status, 429); assert.equal(f.checks.length, 5);
@@ -94,11 +113,13 @@ test('parallel code checks cannot both consume one challenge', async (t) => {
   assert.equal((await verify(f, started.body.challengeId)).status, 409); release(true);
   assert.equal((await first).status, 200); assert.equal(count, 1);
 });
-test('provider failures do not expose credentials', async (t) => {
+test('provider failures are reported without exposing provider details', async (t) => {
   const f = await fixture(t, { send: async () => { throw new Error('secret-token'); } });
-  const result = await send(f); assert.equal(result.status, 503); assert.doesNotMatch(JSON.stringify(result.body), /secret-token/);
+  const result = await send(f);
+  assert.equal(result.status, 503); assert.equal(result.body.error.code, 'WHATSAPP_UNAVAILABLE');
+  assert.doesNotMatch(JSON.stringify(result.body), /secret-token/);
 });
-test('resends cannot reset attempt budget or expiry when Twilio reuses a SID', async (t) => {
+test('resends cannot reset attempt budget or expiry', async (t) => {
   let count = 0;
   const f = await fixture(t, { send: async () => ({ sid: 'same-sid' }), verify: async () => { count++; return false; } });
   const first = await send(f); for (let i = 0; i < 3; i++) await verify(f, first.body.challengeId, '000000');
@@ -109,7 +130,7 @@ test('resends cannot reset attempt budget or expiry when Twilio reuses a SID', a
   assert.equal((await verify(f, second.body.challengeId)).status, 429); assert.equal(count, 5);
 });
 test('SQLite preserves sessions and revocation across restarts', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'mishwarak-auth-test-'));
+  const directory = mkdtempSync(join(tmpdir(), 'teer-auth-test-'));
   const filename = join(directory, 'auth.sqlite'); let store;
   const target = resolve(directory), intended = resolve(tmpdir());
   assert.ok(target.startsWith(intended + '\\') || target.startsWith(intended + '/'), 'Unexpected test cleanup path');

@@ -7,7 +7,7 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL(new URL('index.html', 
 self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', (event) => event.waitUntil((async () => {
   const names = await caches.keys();
-  await Promise.all(names.filter((name) => name.startsWith('mishwarak-v') || name.startsWith('mishwarak-runtime-v')).map((name) => caches.delete(name)));
+  await Promise.all(names.filter((name) => name.startsWith('teer-v') || name.startsWith('teer-runtime-v')).map((name) => caches.delete(name)));
   await self.clients.claim();
 })()));
 self.addEventListener('message', (event) => { if (event.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
@@ -21,8 +21,8 @@ self.addEventListener('push', (event) => {
   if (typeof payload !== 'object' || payload === null) payload = { body: String(payload) };
   const notification = payload.notification || payload;
   const data = payload.data || {};
-  event.waitUntil(self.registration.showNotification(notification.title || data.title || 'teer', {
-    body: notification.body || data.body || 'لديك إشعار جديد', icon: new URL('icons/logo-192.png', appScope).href, badge: new URL('icons/logo-192.png', appScope).href,
+  event.waitUntil(self.registration.showNotification(notification.title || data.title || 'Teer', {
+    body: notification.body || data.body || 'لديك إشعار جديد', icon: new URL('icons/logo-192.webp', appScope).href, badge: new URL('icons/logo-192.webp', appScope).href,
     dir: 'rtl', lang: 'ar', data: { url: safeNotificationURL(notification.click_action || data.url || payload.url) },
   }));
 });

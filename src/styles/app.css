@@ -6,7 +6,6 @@ body { min-height: 100dvh; padding-bottom: calc(120px + env(safe-area-inset-bott
 .bottom-sheet { padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 92dvh; overscroll-behavior: contain; }
 .center-modal { max-height: 80dvh; }
 .center-modal-body { overscroll-behavior: contain; }
-.offline-banner, .preview-mode-bar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
 .install-banner-inner { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
 .login-screen, .waiting-screen { min-height: 100dvh; }
 button.dest-option { width: 100%; font-family: inherit; text-align: right; color: inherit; }
@@ -30,8 +29,15 @@ button.custom-service-card { width: 100%; }
 .verification-actions { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px; }
 .verification-actions button { border:0;background:none;color:var(--primary);font:inherit;font-size:12px;cursor:pointer; }
 .verification-actions button:disabled { color:var(--text-dim);cursor:not-allowed; }
-.verification-code { text-align:center;direction:ltr;font-size:24px!important;letter-spacing:8px;padding-right:20px!important; }
+.verification-code-grid { display:grid;grid-template-columns:repeat(6,minmax(0,48px));justify-content:center;gap:8px;margin:18px 0 8px;direction:ltr; }
+.verification-code-grid[data-code-length="4"] { grid-template-columns:repeat(4,minmax(0,48px)); }
+.verification-code { width:48px;height:54px;text-align:center;direction:ltr;font-size:21px!important;font-weight:900;border:1.5px solid var(--border);border-radius:12px;background:var(--bg-soft);color:var(--text);outline:none;font-family:'Cairo',sans-serif;caret-color:var(--primary);transition:.2s; }
+.verification-code:focus { border-color:var(--primary);box-shadow:0 0 0 4px rgba(139,92,246,.12);background:#fff; }
 .form-step-label { text-align:center;color:var(--text-muted);font-size:11px;margin-bottom:12px; }
+.welcome-whatsapp-guide { display:flex;flex-direction:column;gap:6px;margin:-12px 0 16px;padding:14px;border:1.5px solid rgba(37,211,102,.35);border-radius:14px;background:rgba(37,211,102,.08);text-align:center;font-size:12px;line-height:1.6; }
+.welcome-whatsapp-guide b { color:#128c7e; }
+.welcome-whatsapp-guide a { display:inline-flex;align-items:center;justify-content:center;gap:8px;color:#128c7e;font-weight:900;text-decoration:none;margin-top:4px; }
 button:disabled { cursor:not-allowed; }
+@media (prefers-reduced-motion:reduce) { .login-logo { animation:none; } }
 :focus-visible { outline:2px solid var(--primary);outline-offset:3px; }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important; } }

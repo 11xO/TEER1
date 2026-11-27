@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 export const phoneSchema = z.string().trim().regex(/^01\d{9}$/, 'رقم الموبايل لازم 11 رقم ويبدأ بـ 01');
-export const verificationCodeSchema = z.string().trim().regex(/^\d{6}$/, 'اكتب كود التحقق المكوّن من 6 أرقام');
+export const LOCAL_TEST_OTP_ENABLED = import.meta.env?.DEV === true && import.meta.env?.VITE_LOCAL_TEST_OTP === 'true';
+export const VERIFICATION_CODE_LENGTH = LOCAL_TEST_OTP_ENABLED ? 4 : 6;
+export const verificationCodeSchema = z.string().trim().regex(new RegExp(`^\\d{${VERIFICATION_CODE_LENGTH}}$`), `اكتب كود التحقق المكوّن من ${VERIFICATION_CODE_LENGTH} أرقام`);
 export const sendCodeSchema = z.object({ phone: phoneSchema });
 export const verifyCodeSchema = z.object({ challengeId: z.string().min(1, 'اطلب كود جديد'), code: verificationCodeSchema });
 export const registrationSchema = z.object({

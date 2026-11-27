@@ -5,7 +5,8 @@ import test from 'node:test';
 import { Miniflare } from 'miniflare';
 import { createD1AuthStore } from '../../api/hosted/store.js';
 
-const ORIGIN = 'https://mishwarak.test';
+const ORIGIN = 'https://teer.test';
+
 async function fixture(t, { withProvider = false } = {}) {
   const calls = [];
   const runtime = new Miniflare({ modules: true, scriptPath: resolve('dist/server/index.js'), compatibilityDate: '2025-04-01', d1Databases: { DB: 'hosted-auth-test' },
@@ -34,7 +35,7 @@ async function fixture(t, { withProvider = false } = {}) {
 test('hosted Worker serves frontend assets and a live D1 health endpoint', async (t) => {
   const f = await fixture(t);
   const home = await f.runtime.dispatchFetch(ORIGIN + '/'); assert.equal(home.status, 200); assert.match(await home.text(), /id="root"/);
-  const health = await f.request('/api/health'); assert.equal(health.status, 200); assert.equal(health.data.storage, 'd1'); assert.equal(health.data.whatsappConfigured, false);
+  const health = await f.request('/api/health');   assert.equal(health.status, 200); assert.equal(health.data.storage, 'd1'); assert.equal(health.data.whatsappConfigured, false);
   assert.equal((await f.request('/api/session')).status, 401);
   assert.equal((await f.request('/api/no-route')).status, 404);
   const send = await f.request('/api/whatsapp/send', { method: 'POST', body: { phone: '01111111111' } });
@@ -43,7 +44,7 @@ test('hosted Worker serves frontend assets and a live D1 health endpoint', async
 test('hosted OTP verifies with provider, binds browser and revokes the session', async (t) => {
   const f = await fixture(t, { withProvider: true });
   const started = await f.request('/api/whatsapp/send', { method: 'POST', body: { phone: '01111111111' } });
-  assert.equal(started.status, 200); assert.equal(f.calls[0].fields.get('Channel'), 'whatsapp');
+  assert.equal(started.status, 200); assert.equal(f.calls.length, 1); assert.equal(f.calls[0].fields.get('Channel'), 'whatsapp');
   const binding = f.cookieHeader();
   assert.equal((await f.request('/api/whatsapp/verify', { method: 'POST', body: { challengeId: started.data.challengeId, code: '123456' }, cookie: '' })).status, 400);
   const wrong = await f.request('/api/whatsapp/verify', { method: 'POST', body: { challengeId: started.data.challengeId, code: '000000' } }); assert.equal(wrong.status, 400);

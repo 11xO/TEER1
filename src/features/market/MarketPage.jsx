@@ -11,7 +11,7 @@ export default function MarketPage() {
   const { user, pricing, discounts, navigate, canOrder, toast, submitOrder } = useApp();
   const categorySource = useDatabaseValue(`market_categories/${user.area}`);
   const productSource = useDatabaseValue(`market_products/${user.area}`);
-  const key = `mishwarak_cart:${user.phone}:${user.area}`;
+  const key = `teer_cart:${user.phone}:${user.area}`;
   const [cart, setCart] = useState(() => {
     const saved = storage.json(key, {});
     return Object.fromEntries(Object.entries(saved).filter(([, qty]) => Number.isSafeInteger(qty) && qty > 0));
@@ -49,13 +49,13 @@ export default function MarketPage() {
     const items = cartItems.map(({ id, qty, product }) => ({ productId: id, name: product.name, price: Number(product.price), qty }));
     lock.current = true; setSubmitting(true);
     try {
-      const success = await submitOrder({ type: 'طلب ماركت', orderType: 'market', items, details: items.map((item) => `${item.qty} × ${escapeText(item.name)}`).join('<br>'), from: 'ماركت teer', to: address.trim(), price: subtotal + delivery, originalPrice: subtotal + delivery, deliveryFee: delivery, itemsTotal: subtotal, commission: delivery * pricing.delegateCommission / 100, status: 'ready_for_driver', hasImages: false }, 'delivery');
+      const success = await submitOrder({ type: 'طلب ماركت', orderType: 'market', items, details: items.map((item) => `${item.qty} × ${escapeText(item.name)}`).join('<br>'), from: 'ماركت Teer', to: address.trim(), price: subtotal + delivery, originalPrice: subtotal + delivery, deliveryFee: delivery, itemsTotal: subtotal, commission: delivery * pricing.delegateCommission / 100, status: 'ready_for_driver', hasImages: false }, 'delivery');
       if (success) { storage.set(key, '{}'); setCart({}); setCartOpen(false); }
     } finally { lock.current = false; setSubmitting(false); }
   }
   return <>
     <div className="page active" id="page-market">
-      <div className="market-header"><div className="market-header-top"><button className="market-back-btn" onClick={() => navigate('home')} aria-label="رجوع"><Icon name="fa-arrow-right" /></button><div className="market-title-box"><div className="market-title"><Icon name="fa-shopping-basket" /> ماركت teer</div><div className="market-subtitle">تسوق أونلاين</div></div><ThemeToggle /><button className="market-cart-btn" aria-label="سلة المشتريات" onClick={() => setCartOpen(true)}><Icon name="fa-shopping-cart" />{count > 0 && <span className="market-cart-badge">{count}</span>}</button></div><div className="market-search-box"><input type="text" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" value={search} onChange={(event) => setSearch(event.target.value)} /><Icon name="fa-search" /></div></div>
+      <div className="market-header"><div className="market-header-top"><button className="market-back-btn" onClick={() => navigate('home')} aria-label="رجوع"><Icon name="fa-arrow-right" /></button>            <div className="market-title-box"><div className="market-title"><Icon name="fa-shopping-basket" /> ماركت Teer</div><div className="market-subtitle">تسوق أونلاين</div></div><ThemeToggle /><button className="market-cart-btn" aria-label="سلة المشتريات" onClick={() => setCartOpen(true)}><Icon name="fa-shopping-cart" />{count > 0 && <span className="market-cart-badge">{count}</span>}</button></div><div className="market-search-box"><input type="text" placeholder="ابحث عن منتج..." aria-label="ابحث عن منتج" value={search} onChange={(event) => setSearch(event.target.value)} /><Icon name="fa-search" /></div></div>
       <div className="market-categories"><button className={`cat-chip ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>🛍️ الكل</button>{categories.map((item) => <button key={item.id} className={`cat-chip ${category === item.id ? 'active' : ''}`} onClick={() => setCategory(item.id)}>{item.icon || '📦'} {item.name || 'تصنيف'}</button>)}</div>
       <div className="market-grid">{productSource.loading ? <Loader /> : productSource.error ? <Empty icon="fa-wifi" message="تعذر تحميل المنتجات، تحقق من الاتصال" /> : !products.length ? <div className="market-empty"><Icon name="fa-box-open" /><p>لا توجد منتجات</p></div> : products.map((product) => <div className="product-card" key={product.id}>
         <div className="product-image-box">{product.image ? <img src={product.image} className="product-image" loading="lazy" alt={product.name} /> : <div className="product-no-image"><Icon name="fa-image" /></div>}{!available(product) && <span className="product-badge out">خلص</span>}</div>

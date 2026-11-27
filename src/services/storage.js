@@ -24,3 +24,31 @@ export function persistUser(user) {
     else storage.remove(`user_${key}`);
   }
 }
+
+export function rememberedVerifiedPhones() {
+  const value = storage.json('teer_verified_phones', []);
+  return Array.isArray(value) ? value.map((phone) => String(phone).replace(/\D/g, '')).filter(Boolean) : [];
+}
+export function isRememberedVerifiedPhone(phone) {
+  const normalized = String(phone).replace(/\D/g, '');
+  return Boolean(normalized) && rememberedVerifiedPhones().includes(normalized);
+}
+export function rememberVerifiedPhone(phone) {
+  const normalized = String(phone).replace(/\D/g, '');
+  if (!normalized) return;
+  const phones = rememberedVerifiedPhones();
+  if (!phones.includes(normalized)) storage.set('teer_verified_phones', JSON.stringify([...phones, normalized]));
+}
+
+export function saveLastLoginProfile(profile) {
+  if (!profile?.phone) return;
+  storage.set('teer_last_login_profile', JSON.stringify({
+    name: String(profile.name || ''),
+    phone: String(profile.phone || ''),
+    area: String(profile.area || ''),
+  }));
+}
+export function lastLoginProfile() {
+  const value = storage.json('teer_last_login_profile', null);
+  return value && typeof value === 'object' ? value : null;
+}

@@ -8,11 +8,11 @@ export function ThemeProvider({ children }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b1220' : '#8b5cf6');
-    storage.set('mishwarak_theme', theme);
+    storage.set('teer_theme', theme);
   }, [theme]);
   useEffect(() => {
     const sync = (event) => {
-      if (event.key === 'mishwarak_theme' || event.key === null) setTheme(event.newValue === 'dark' ? 'dark' : 'light');
+      if (event.key === 'teer_theme' || event.key === null) setTheme(event.newValue === 'dark' ? 'dark' : 'light');
     };
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
